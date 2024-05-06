@@ -27,7 +27,7 @@ func Load() {
 		Port = 9000
 	}
 
-	DatabaseConnectionString = fmt.Sprintf("%s:%s@/%s?chartset=utf8&parseTime=True&loc=Local", 
+	DatabaseConnectionString = fmt.Sprintf("%s:%s@/%s?charset=utf8&parseTime=True&loc=Local", 
 		os.Getenv("DB_USER"),
 		os.Getenv("DB_PASSWORD"),
 		os.Getenv("DB_NAME"),
