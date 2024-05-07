@@ -1,12 +1,14 @@
 package controllers
 
 import (
+	"api/src/authentication"
 	"api/src/database"
 	"api/src/models"
 	"api/src/repositories"
 	"api/src/response"
 	"api/src/security"
 	"encoding/json"
+	"fmt"
 	"io"
 	"net/http"
 )
@@ -52,5 +54,13 @@ func Login(w http.ResponseWriter, r *http.Request) {
 		return 
 	}
 
+	token, error := authentication.CreateToken(databaseUser.ID)
+
+	if error != nil {
+		response.Error(w, http.StatusUnauthorized, error)
+		return 
+	}
+
+	fmt.Println(token)
 
 }

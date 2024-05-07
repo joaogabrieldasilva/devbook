@@ -12,6 +12,7 @@ import (
 var (
 	DatabaseConnectionString = ""
 	Port = 0
+	JwtSecret = ""
 )
 
 func Load() {
@@ -26,6 +27,13 @@ func Load() {
 	if error != nil {
 		Port = 9000
 	}
+
+	JwtSecret = os.Getenv("JWT_SECRET")
+
+	if error != nil {
+		log.Fatal(error)
+	}
+
 
 	DatabaseConnectionString = fmt.Sprintf("%s:%s@/%s?charset=utf8&parseTime=True&loc=Local", 
 		os.Getenv("DB_USER"),

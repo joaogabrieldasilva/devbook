@@ -10,7 +10,7 @@ import (
 
 func main() {
 	config.Load()
-	fmt.Println(fmt.Sprintf("Escutando na porta %d",config.Port))
+	fmt.Printf("Escutando na porta %d\n",config.Port)
 
 	r := router.Generate()
 
