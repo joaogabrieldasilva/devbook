@@ -1,11 +1,13 @@
 package controllers
 
 import (
+	"api/src/authentication"
 	"api/src/database"
 	"api/src/models"
 	"api/src/repositories"
 	"api/src/response"
 	"encoding/json"
+	"errors"
 	"io"
 	"net/http"
 	"strconv"
@@ -123,6 +125,18 @@ func UpdateUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	tokenUserId, error := authentication.ExtractUserId(r)
+
+	if error !=nil {
+		response.Error(w, http.StatusUnauthorized, error)
+		return
+	}
+
+	if tokenUserId != userId {
+		response.Error(w, http.StatusForbidden, errors.New("you can only edit your own user"))
+		return
+	}
+
 	body, error := io.ReadAll(r.Body)
 
 	if error !=nil {
@@ -166,6 +180,18 @@ func DeleteUser(w http.ResponseWriter, r *http.Request) {
 
 	if error !=nil {
 		response.Error(w, http.StatusBadRequest, error)
+		return
+	}
+
+	tokenUserId, error := authentication.ExtractUserId(r)
+
+	if error !=nil {
+		response.Error(w, http.StatusUnauthorized, error)
+		return
+	}
+
+	if tokenUserId != userId {
+		response.Error(w, http.StatusForbidden, errors.New("you can only delete your own user"))
 		return
 	}
 

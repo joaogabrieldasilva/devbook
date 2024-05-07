@@ -120,7 +120,7 @@ func (repository usersRepository) DeleteUser(userId uint64) error {
 
 func (repository usersRepository) GetUserByEmail(userEmail string) (models.User, error) {
 	fmt.Println(userEmail)
-	row, error := repository.db.Query("SELECT email, password FROM users WHERE email = ?", userEmail)
+	row, error := repository.db.Query("SELECT id, email, password FROM users WHERE email = ?", userEmail)
 
 	if error != nil {
 		return models.User{}, error
@@ -129,7 +129,7 @@ func (repository usersRepository) GetUserByEmail(userEmail string) (models.User,
 	var user models.User
 
 	if row.Next() {
-		if error := row.Scan(&user.Email, &user.Password); error != nil {
+		if error := row.Scan(&user.ID, &user.Email, &user.Password); error != nil {
 			return models.User{}, error
 		}
 	}
