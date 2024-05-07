@@ -53,7 +53,7 @@ func (repository postsRepository) GetPostByID(postID uint64) (models.Post, error
 		return models.Post{}, error
 	}
 
-
+	
 	if rows.Next() {
 		var post models.Post
 
@@ -110,6 +110,24 @@ func (repository postsRepository) UpdatePost(postID uint64, post models.Post) er
 	defer statement.Close()
 
 	if _, error := statement.Exec(post.Title, post.Content, postID); error != nil {
+		return error
+	}
+
+	return nil
+}
+
+func (repository postsRepository) DeletePost(postID uint64) error {
+
+
+	statement, error := repository.db.Prepare("DELETE FROM posts WHERE id = ?")
+
+	if error != nil {
+		return error
+	}
+
+	defer statement.Close()
+
+	if _, error := statement.Exec(postID); error != nil {
 		return error
 	}
 

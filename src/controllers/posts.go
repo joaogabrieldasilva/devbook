@@ -9,6 +9,7 @@ import (
 	"api/src/response"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"io"
 	"net/http"
 	"strconv"
@@ -107,6 +108,11 @@ func GetPostById(w http.ResponseWriter, r *http.Request) {
 		return
 	} 
 
+	if post.ID == 0 {
+		response.Error(w, http.StatusNotFound, errors.New(fmt.Sprintf("the post with id %d does not exist", postId)))
+		return 
+	}
+
 	response.JSON(w, http.StatusOK, post)
 }
 
@@ -178,7 +184,7 @@ func UpdatePost(w http.ResponseWriter, r *http.Request) {
 	}
 	
 	if databasePost.AuthorID != userID {
-		response.Error(w, http.StatusForbidden, errors.New("cannot update posts that you are not the author"))
+		response.Error(w, http.StatusForbidden, errors.New("cannot update post that you are not the author"))
 		return 
 	}
 
@@ -204,6 +210,53 @@ func UpdatePost(w http.ResponseWriter, r *http.Request) {
 	if error := repository.UpdatePost(postID, post); error != nil {
 		response.Error(w, http.StatusInternalServerError, error)
 		return  
+	}
+
+	response.JSON(w, http.StatusNoContent, nil)
+}
+
+func DeletePost(w http.ResponseWriter, r *http.Request) {
+	params := mux.Vars(r)
+
+	postID, error := strconv.ParseUint(params["postId"], 10, 64)
+
+	if error != nil {
+		response.Error(w, http.StatusBadRequest, error)
+		return 
+	}
+
+	db, error := database.Connect()
+	if error != nil {
+		response.Error(w, http.StatusInternalServerError, error)
+		return 
+	}
+
+	defer db.Close()
+
+	repository := repositories.NewPostsRepository(db)
+
+	databasePost, error := repository.GetPostByID(postID)
+
+	if error != nil {
+		response.Error(w, http.StatusInternalServerError, error)
+		return 
+	}
+
+	if databasePost.ID == 0 {
+		response.Error(w, http.StatusNotFound, errors.New(fmt.Sprintf("the post with id %d does not exist", postID)))
+		return 
+	}
+
+	userID, error := authentication.ExtractUserId(r)
+
+	if databasePost.AuthorID != userID {
+		response.Error(w, http.StatusForbidden, errors.New("cannot delete post that you are not the author"))
+		return 
+	}
+
+	if error := repository.DeletePost(postID); error != nil {
+		response.Error(w, http.StatusInternalServerError, error)
+		return 
 	}
 
 	response.JSON(w, http.StatusNoContent, nil)
