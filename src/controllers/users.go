@@ -3,9 +3,11 @@ package controllers
 import (
 	"api/src/authentication"
 	"api/src/database"
+	"api/src/dto"
 	"api/src/models"
 	"api/src/repositories"
 	"api/src/response"
+	"api/src/security"
 	"encoding/json"
 	"errors"
 	"io"
@@ -359,4 +361,67 @@ func GetFollowing(w http.ResponseWriter, r *http.Request) {
 	}
 
 	response.JSON(w, http.StatusOK, followers)
+}
+
+func UpdatePassword(w http.ResponseWriter, r *http.Request) {
+
+	userID, error := authentication.ExtractUserId(r)
+
+	if error != nil {
+		response.Error(w, http.StatusForbidden, error)
+		return
+	}
+
+	body, error := io.ReadAll(r.Body)
+
+	if error != nil {
+		response.Error(w, http.StatusForbidden, error)
+		return
+	}
+
+	var updatePasswordDto dto.UpdatePasswordDTO
+
+	if error := json.Unmarshal(body, &updatePasswordDto); error != nil {
+		response.Error(w, http.StatusUnprocessableEntity, error)
+		return 
+	}
+
+	db, error := database.Connect()
+
+	if error != nil {
+		response.Error(w, http.StatusInternalServerError, error)
+		return 
+	}
+
+	defer db.Close()
+
+	repository := repositories.NewUserRepository(db)
+
+	databasePassword, error := repository.GetPassword(userID)
+
+	if error != nil {
+		response.Error(w, http.StatusInternalServerError, error)
+		return 
+	}
+
+	if error := security.VerifyPassword(databasePassword, updatePasswordDto.CurrentPassword); error != nil {
+		response.Error(w, http.StatusInternalServerError, errors.New("the informed password does not match with the current one"))
+		return 
+	}
+
+	hashPassword, error := security.Hash(updatePasswordDto.NewPassowrd)
+
+	if error != nil {
+		response.Error(w, http.StatusBadRequest, error)
+		return 
+	}
+
+
+	if error := repository.UpdatePassword(userID, string(hashPassword)); error != nil {
+		response.Error(w, http.StatusInternalServerError, error)
+		return 
+	}
+	
+	response.JSON(w, http.StatusNoContent, nil)
+
 }
