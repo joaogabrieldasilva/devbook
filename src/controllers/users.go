@@ -292,3 +292,37 @@ func UnfollowUser(w http.ResponseWriter, r *http.Request) {
 	
 	response.JSON(w, http.StatusNoContent, nil)
 }
+
+func GetFollowers(w http.ResponseWriter, r *http.Request) {
+	params := mux.Vars(r)
+
+
+	userID, error := strconv.ParseUint(params["userId"], 10, 64)
+
+	if error != nil {
+		response.Error(w, http.StatusBadRequest, error)
+		return
+	}
+
+	db, error := database.Connect()
+
+	if error != nil {
+		response.Error(w, http.StatusInternalServerError, error)
+		return
+	}
+
+	defer db.Close()
+
+
+	repository := repositories.NewUserRepository(db)
+
+	followers, error := repository.GetFollowers(userID)
+
+
+	if error != nil {
+		response.Error(w, http.StatusInternalServerError, error)
+		return
+	}
+
+	response.JSON(w, http.StatusOK, followers)
+}
