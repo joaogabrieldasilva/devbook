@@ -261,3 +261,38 @@ func DeletePost(w http.ResponseWriter, r *http.Request) {
 
 	response.JSON(w, http.StatusNoContent, nil)
 }
+
+func GetPostsByUser(w http.ResponseWriter, r *http.Request) {
+
+	params := mux.Vars(r)
+
+	userID, error := strconv.ParseUint(params["userId"], 10, 64)
+
+	if error != nil {
+		response.Error(w, http.StatusBadRequest, error)
+		return
+	}
+
+	db, error := database.Connect()
+
+	if error != nil {
+		response.Error(w, http.StatusInternalServerError, error)
+		return
+	}
+
+	defer db.Close()
+
+	repository := repositories.NewPostsRepository(db)
+
+	posts, error := repository.GetPostsByUser(userID)
+
+	if error != nil {
+		response.Error(w, http.StatusInternalServerError, error)
+		return
+	}
+
+
+	response.JSON(w, http.StatusOK, posts)
+
+
+}
