@@ -27,3 +27,15 @@ CREATE TABLE followers (
     PRIMARY KEY(user_id, follower_id)
 ) ENGINE=INNODB;
 
+
+CREATE TABLE posts (
+    id int auto_increment primary key,
+    title varchar(50) not null,
+    content varchar(300) not null,
+    author_id int not null,
+    FOREIGN KEY (author_id)
+    REFERENCES users(id)
+    ON DELETE CASCADE,
+    likes int default 0
+    created_at timestramp default current_timestamp()
+) ENGINE=INNODB;
