@@ -1,9 +1,12 @@
 CREATE DATABASE IF NOT EXISTS devbook;
 USE devbook;
 
+DROP TABLE IF EXISTS posts;
 DROP TABLE IF EXISTS users;
 DROP TABLE IF EXISTS followers;
 DROP TABLE IF EXISTS posts;
+
+
 
 
 CREATE TABLE users (
@@ -39,5 +42,5 @@ CREATE TABLE posts (
     REFERENCES users(id)
     ON DELETE CASCADE,
     likes int default 0
-    created_at timestramp default current_timestamp()
+    created_at timestamp default current_timestamp()
 ) ENGINE=INNODB;
