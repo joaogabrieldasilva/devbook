@@ -3,6 +3,7 @@ package repositories
 import (
 	"api/src/models"
 	"database/sql"
+	"fmt"
 )
 
 type usersRepository struct {
@@ -38,4 +39,81 @@ func (repository usersRepository) Create(user models.User) (uint64, error) {
 	}
 
 	return uint64(ID), nil
+}
+
+func (repository usersRepository) GetUsers(nameOrUsername string) ([]models.User, error) {
+	nameOrUsername = fmt.Sprintf("%%%s%%", nameOrUsername)
+	
+	rows, error := repository.db.Query("SELECT id, name, username, email, created_at FROM users WHERE name LIKE ? or username LIKE ?", nameOrUsername, nameOrUsername)
+
+	if error != nil {
+		return nil, error
+	}
+
+	var users []models.User
+
+	for rows.Next() {
+		var user models.User
+
+		if error := rows.Scan(&user.ID, &user.Name, &user.Username, &user.Email, &user.CreatedAt); error != nil {
+			return nil, error
+		}
+
+		users = append(users, user)
+	}
+	return users, nil
+}
+
+func (repository usersRepository) GetUserById(userId uint64) (models.User, error) {
+	
+	row, error := repository.db.Query("SELECT id, name, username, email, created_at FROM users WHERE id = ?", userId)
+
+	if error != nil {
+		return models.User{}, error
+	}
+
+	var user models.User
+
+	if row.Next() {
+		if error := row.Scan(&user.ID, &user.Name, &user.Username, &user.Email, &user.CreatedAt); error != nil {
+			return models.User{}, error
+		}
+	}
+
+	return user, nil
+}
+
+func (repository usersRepository) UpdateUser(userId uint64, user models.User) error {
+	
+	statement, error := repository.db.Prepare("UPDATE users set name = ?, username = ?, email = ? WHERE id = ?")
+
+	if error != nil {
+		return error
+	}
+
+	defer statement.Close()
+
+	if _, error := statement.Exec(user.Name, user.Username, user.Email, userId); error != nil {
+		return error
+	}
+
+	return nil
+}
+
+
+func (repository usersRepository) DeleteUser(userId uint64) error {
+	
+	statement, error := repository.db.Prepare("DELETE FROM users WHERE id = ?")
+
+	if error != nil {
+		return error
+	}
+
+	defer statement.Close()
+
+	if _, error := statement.Exec(userId); error != nil {
+		return error
+	}
+
+	return nil
 }
