@@ -56,8 +56,8 @@ func (user *User) validate(stage string) error {
 
 func (user *User) format(stage string) error {
 	user.Name = strings.TrimSpace(user.Name)
-	user.Username = strings.TrimSpace(user.Name)
-	user.Email = strings.TrimSpace(user.Name)
+	user.Username = strings.TrimSpace(user.Username)
+	user.Email = strings.TrimSpace(user.Email)
 
 	if stage == "register" {
 		hashedPassword, error := security.Hash(user.Password) 
