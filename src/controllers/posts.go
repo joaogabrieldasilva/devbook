@@ -108,3 +108,34 @@ func GetPostById(w http.ResponseWriter, r *http.Request) {
 
 	response.JSON(w, http.StatusOK, post)
 }
+
+func GetPosts(w http.ResponseWriter, r *http.Request) {
+
+	userID, error := authentication.ExtractUserId(r)
+
+	if error != nil {
+		response.Error(w, http.StatusUnauthorized, error)
+		return
+	}
+
+	db, error := database.Connect()
+
+	if error != nil {
+		response.Error(w, http.StatusInternalServerError, error)
+		return 
+	}
+
+	defer db.Close()
+
+	repository := repositories.NewPostsRepository(db)
+
+	posts, error := repository.GetPosts(userID)
+
+	if error != nil {
+		response.Error(w, http.StatusInternalServerError, error)
+		return  
+	}
+
+
+	response.JSON(w, http.StatusOK, posts)
+}
