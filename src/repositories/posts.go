@@ -1,6 +1,9 @@
 package repositories
 
-import "database/sql"
+import (
+	"api/src/models"
+	"database/sql"
+)
 
 type postsRepository struct {
 	db *sql.DB
@@ -37,4 +40,30 @@ func (repository postsRepository) CreatePost(authorId uint64, title string, cont
 	}
 
 	return uint64(createdPostID), nil
+}
+
+func (repository postsRepository) GetPostByID(postID uint64) ([]models.Post, error) {
+
+	rows, error := repository.db.Query(`
+		SELECT p.*, u.username from posts p JOIN users u ON p.author_id = u.id
+		WHERE p.id = ?
+	`, postID)
+
+	if error != nil {
+		return nil, error
+	}
+
+	var posts []models.Post
+
+	for rows.Next() {
+		var post models.Post
+
+		if error := rows.Scan(&post.ID, &post.Title, &post.Content, &post.AuthorID, &post.Likes, &post.CreatedAt, &post.AuthorUsername); error != nil {
+			return nil, error
+		}
+
+		posts = append(posts, post)
+	}
+	
+	return posts, error
 }

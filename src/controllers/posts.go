@@ -10,7 +10,10 @@ import (
 	"encoding/json"
 	"io"
 	"net/http"
+	"strconv"
 	"time"
+
+	"github.com/gorilla/mux"
 )
 
 func CreatePost(w http.ResponseWriter, r *http.Request) {
@@ -71,4 +74,37 @@ func CreatePost(w http.ResponseWriter, r *http.Request) {
 
 	response.JSON(w, http.StatusCreated, post)
 
+}
+
+func GetPostById(w http.ResponseWriter, r *http.Request) {
+
+	params := mux.Vars(r)
+
+	postId, error := strconv.ParseUint(params["postId"], 10, 64)
+
+	if error != nil {
+		response.Error(w, http.StatusBadRequest, error)
+		return
+	}
+
+	db, error := database.Connect()
+
+	if error != nil {
+		response.Error(w, http.StatusInternalServerError, error)
+		return
+	} 
+
+	defer db.Close()
+
+	repository := repositories.NewPostsRepository(db)
+
+
+	post, error := repository.GetPostByID(postId)
+
+	if error != nil {
+		response.Error(w, http.StatusInternalServerError, error)
+		return
+	} 
+
+	response.JSON(w, http.StatusOK, post)
 }
