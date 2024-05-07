@@ -8,6 +8,7 @@ import (
 	"api/src/repositories"
 	"api/src/response"
 	"encoding/json"
+	"errors"
 	"io"
 	"net/http"
 	"strconv"
@@ -138,4 +139,72 @@ func GetPosts(w http.ResponseWriter, r *http.Request) {
 
 
 	response.JSON(w, http.StatusOK, posts)
+}
+
+func UpdatePost(w http.ResponseWriter, r *http.Request) {
+	params := mux.Vars(r)
+
+	postID, error := strconv.ParseUint(params["postId"], 10, 64)
+
+	if error != nil {
+		response.Error(w, http.StatusBadRequest, error)
+		return 
+	}
+
+	db, error := database.Connect()
+
+	if error != nil {
+		response.Error(w, http.StatusInternalServerError, error)
+		return 
+	}
+
+	defer db.Close()
+
+	repository := repositories.NewPostsRepository(db)
+
+	databasePost, error := repository.GetPostByID(postID)
+
+
+	if error != nil {
+		response.Error(w, http.StatusInternalServerError, error)
+		return 
+	}
+
+	userID, error := authentication.ExtractUserId(r)
+
+	if error != nil {
+		response.Error(w, http.StatusInternalServerError, error)
+		return 
+	}
+	
+	if databasePost.AuthorID != userID {
+		response.Error(w, http.StatusForbidden, errors.New("cannot update posts that you are not the author"))
+		return 
+	}
+
+	body, error := io.ReadAll(r.Body)
+
+	if error != nil {
+		response.Error(w, http.StatusInternalServerError, error)
+		return 
+	}
+
+	var post models.Post
+
+	if error := json.Unmarshal(body, &post); error != nil {
+		response.Error(w, http.StatusBadRequest, error)
+		return  
+	}
+
+	if error := post.Prepare(); error != nil {
+		response.Error(w, http.StatusBadRequest, error)
+		return  
+	}
+
+	if error := repository.UpdatePost(postID, post); error != nil {
+		response.Error(w, http.StatusInternalServerError, error)
+		return  
+	}
+
+	response.JSON(w, http.StatusNoContent, nil)
 }

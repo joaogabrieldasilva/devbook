@@ -25,5 +25,11 @@ var postsRoutes = []Route{
 		Function: controllers.GetPostById,
 		RequiresAuthentication: true,
 	},
+	{
+		URI: "/posts/{postId}",
+		Method: http.MethodPut,
+		Function: controllers.UpdatePost,
+		RequiresAuthentication: true,
+	},
 	
 }

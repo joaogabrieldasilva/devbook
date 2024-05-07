@@ -42,7 +42,7 @@ func (repository postsRepository) CreatePost(authorId uint64, title string, cont
 	return uint64(createdPostID), nil
 }
 
-func (repository postsRepository) GetPostByID(postID uint64) ([]models.Post, error) {
+func (repository postsRepository) GetPostByID(postID uint64) (models.Post, error) {
 
 	rows, error := repository.db.Query(`
 		SELECT p.*, u.username from posts p JOIN users u ON p.author_id = u.id
@@ -50,22 +50,21 @@ func (repository postsRepository) GetPostByID(postID uint64) ([]models.Post, err
 	`, postID)
 
 	if error != nil {
-		return nil, error
+		return models.Post{}, error
 	}
 
-	var posts []models.Post
 
-	for rows.Next() {
+	if rows.Next() {
 		var post models.Post
 
 		if error := rows.Scan(&post.ID, &post.Title, &post.Content, &post.AuthorID, &post.Likes, &post.CreatedAt, &post.AuthorUsername); error != nil {
-			return nil, error
+			return models.Post{}, error
 		}
 
-		posts = append(posts, post)
+		return post, error
 	}
-	
-	return posts, error
+
+	return models.Post{}, error
 }
 
 func (repository postsRepository) GetPosts(userID uint64) ([]models.Post, error) {
@@ -97,4 +96,22 @@ func (repository postsRepository) GetPosts(userID uint64) ([]models.Post, error)
 	}
 
 	return posts, nil
+}
+
+func (repository postsRepository) UpdatePost(postID uint64, post models.Post) error {
+
+	statement, error := repository.db.Prepare("UPDATE posts set title = ?, content = ? where id = ?")
+
+
+	if error != nil {
+		return error
+	}
+
+	defer statement.Close()
+
+	if _, error := statement.Exec(post.Title, post.Content, postID); error != nil {
+		return error
+	}
+
+	return nil
 }
