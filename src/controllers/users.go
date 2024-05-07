@@ -379,7 +379,7 @@ func UpdatePassword(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var updatePasswordDto dto.UpdatePasswordDTO
+	var updatePasswordDto dto.UpdatePassword
 
 	if error := json.Unmarshal(body, &updatePasswordDto); error != nil {
 		response.Error(w, http.StatusUnprocessableEntity, error)
