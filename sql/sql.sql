@@ -41,6 +41,6 @@ CREATE TABLE posts (
     FOREIGN KEY (author_id)
     REFERENCES users(id)
     ON DELETE CASCADE,
-    likes int default 0
+    likes int default 0,
     created_at timestamp default current_timestamp()
 ) ENGINE=INNODB;
