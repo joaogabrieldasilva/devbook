@@ -326,3 +326,37 @@ func GetFollowers(w http.ResponseWriter, r *http.Request) {
 
 	response.JSON(w, http.StatusOK, followers)
 }
+
+func GetFollowing(w http.ResponseWriter, r *http.Request) {
+	params := mux.Vars(r)
+
+
+	userID, error := strconv.ParseUint(params["userId"], 10, 64)
+
+	if error != nil {
+		response.Error(w, http.StatusBadRequest, error)
+		return
+	}
+
+	db, error := database.Connect()
+
+	if error != nil {
+		response.Error(w, http.StatusInternalServerError, error)
+		return
+	}
+
+	defer db.Close()
+
+
+	repository := repositories.NewUserRepository(db)
+
+	followers, error := repository.GetFollowing(userID)
+
+
+	if error != nil {
+		response.Error(w, http.StatusInternalServerError, error)
+		return
+	}
+
+	response.JSON(w, http.StatusOK, followers)
+}
